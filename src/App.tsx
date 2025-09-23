@@ -1,63 +1,82 @@
 import './App.css'
+import Layout from './components/layout/Layout'
+import DashboardStats from './components/features/DashboardStats'
+import PropertyCard from './components/features/PropertyCard'
 
 function App() {
+  const stats = [
+    { label: 'Total Properties', value: 12, change: 8, icon: '🏢' },
+    { label: 'Total Units', value: 248, change: 12, icon: '🏠' },
+    { label: 'Occupancy Rate', value: '94%', change: 2, icon: '📊' },
+    { label: 'Monthly Revenue', value: '$425K', change: 15, icon: '💰' }
+  ];
+
+  const properties = [
+    { name: 'Sunset Apartments', address: '123 Main St, City, ST', units: 48, occupancy: 92 },
+    { name: 'Park View Complex', address: '456 Oak Ave, Town, ST', units: 72, occupancy: 96 },
+    { name: 'Downtown Lofts', address: '789 Urban Blvd, Metro, ST', units: 36, occupancy: 89 }
+  ];
+
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
-      <div className="container mx-auto px-4 py-16">
-        <header className="text-center mb-12">
-          <h1 className="text-5xl font-bold text-gray-900 mb-4">
-            Apartment Management Platform
-          </h1>
-          <p className="text-xl text-gray-600">
-            Modern property management with advanced digital asset capabilities
-          </p>
-        </header>
-
-        <div className="grid md:grid-cols-3 gap-8 max-w-6xl mx-auto">
-          <div className="bg-white rounded-lg shadow-lg p-6">
-            <div className="w-12 h-12 bg-blue-500 rounded-lg flex items-center justify-center mb-4">
-              <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
-              </svg>
-            </div>
-            <h3 className="text-xl font-semibold mb-2">Property Management</h3>
-            <p className="text-gray-600">
-              Manage multiple properties, buildings, and units with ease
-            </p>
+    <Layout>
+      <div className="bg-gradient-to-br from-blue-50 to-indigo-100 py-12">
+        <div className="container mx-auto px-4">
+          <div className="mb-8">
+            <h1 className="text-3xl font-bold text-gray-900 mb-2">Dashboard</h1>
+            <p className="text-gray-600">Welcome back! Here's an overview of your properties.</p>
           </div>
 
-          <div className="bg-white rounded-lg shadow-lg p-6">
-            <div className="w-12 h-12 bg-green-500 rounded-lg flex items-center justify-center mb-4">
-              <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-              </svg>
+          <DashboardStats stats={stats} />
+
+          <div className="mt-12">
+            <div className="flex justify-between items-center mb-6">
+              <h2 className="text-2xl font-bold text-gray-900">Properties</h2>
+              <button className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-medium">
+                Add Property
+              </button>
             </div>
-            <h3 className="text-xl font-semibold mb-2">Digital Assets</h3>
-            <p className="text-gray-600">
-              Advanced media management with AI-powered organization
-            </p>
+            
+            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {properties.map((property, index) => (
+                <PropertyCard key={index} {...property} />
+              ))}
+            </div>
           </div>
 
-          <div className="bg-white rounded-lg shadow-lg p-6">
-            <div className="w-12 h-12 bg-purple-500 rounded-lg flex items-center justify-center mb-4">
-              <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
-              </svg>
+          <div className="mt-12 grid md:grid-cols-2 gap-6">
+            <div className="bg-white rounded-lg shadow p-6">
+              <h3 className="text-lg font-semibold mb-4">Recent Activity</h3>
+              <div className="space-y-3">
+                <div className="flex items-center text-sm">
+                  <div className="w-2 h-2 bg-green-500 rounded-full mr-3"></div>
+                  <span className="text-gray-600">New tenant moved in - Unit 204</span>
+                </div>
+                <div className="flex items-center text-sm">
+                  <div className="w-2 h-2 bg-blue-500 rounded-full mr-3"></div>
+                  <span className="text-gray-600">Maintenance completed - Unit 312</span>
+                </div>
+                <div className="flex items-center text-sm">
+                  <div className="w-2 h-2 bg-yellow-500 rounded-full mr-3"></div>
+                  <span className="text-gray-600">Rent payment received - Unit 105</span>
+                </div>
+              </div>
             </div>
-            <h3 className="text-xl font-semibold mb-2">Tenant Portal</h3>
-            <p className="text-gray-600">
-              Self-service features for tenants including payments and requests
-            </p>
-          </div>
-        </div>
 
-        <div className="text-center mt-12">
-          <button className="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 px-8 rounded-lg transition-colors">
-            Get Started
-          </button>
+            <div className="bg-white rounded-lg shadow p-6">
+              <h3 className="text-lg font-semibold mb-4">Media Library</h3>
+              <div className="grid grid-cols-3 gap-2">
+                {[...Array(6)].map((_, i) => (
+                  <div key={i} className="aspect-square bg-gray-200 rounded"></div>
+                ))}
+              </div>
+              <button className="mt-4 text-blue-600 hover:text-blue-700 text-sm font-medium">
+                View All Media →
+              </button>
+            </div>
+          </div>
         </div>
       </div>
-    </div>
+    </Layout>
   )
 }
 
