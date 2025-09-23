@@ -1,15 +1,25 @@
+import { Link, useLocation } from 'react-router-dom';
+
 export default function Header() {
+  const location = useLocation();
+  
+  const isActive = (path: string) => {
+    return location.pathname === path ? 'text-blue-600' : 'text-gray-600 hover:text-gray-900';
+  };
+
   return (
     <header className="bg-white shadow-sm border-b">
       <div className="container mx-auto px-4">
         <div className="flex items-center justify-between h-16">
           <div className="flex items-center">
-            <h1 className="text-xl font-bold text-gray-900">ApartmentDAM</h1>
+            <Link to="/">
+              <h1 className="text-xl font-bold text-gray-900">ApartmentDAM</h1>
+            </Link>
           </div>
           <nav className="hidden md:flex items-center space-x-8">
-            <a href="#" className="text-gray-600 hover:text-gray-900">Properties</a>
-            <a href="#" className="text-gray-600 hover:text-gray-900">Tenants</a>
-            <a href="#" className="text-gray-600 hover:text-gray-900">Media</a>
+            <Link to="/" className={isActive('/')}>Dashboard</Link>
+            <Link to="/properties" className={isActive('/properties')}>Properties</Link>
+            <Link to="/media" className={isActive('/media')}>Media</Link>
             <a href="#" className="text-gray-600 hover:text-gray-900">Reports</a>
           </nav>
           <div className="flex items-center space-x-4">
