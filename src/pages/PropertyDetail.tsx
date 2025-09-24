@@ -172,7 +172,14 @@ export default function PropertyDetail() {
                       <div className="text-sm text-gray-600 space-y-1">
                         <p>{layout.bedrooms} bed • {layout.bathrooms} bath • {layout.squareFeet} sq ft</p>
                         <p className="font-semibold text-gray-900">From ${layout.baseRent}/mo</p>
-                        <p className="text-green-600">{layout.availableUnits} units available</p>
+                        <div className="flex items-center gap-2">
+                          <p className="text-green-600">{layout.availableUnits} units available</p>
+                          {layout.unitAvailability && layout.unitAvailability.some(u => u.isImmediatelyAvailable) && (
+                            <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                              Move-in Ready
+                            </span>
+                          )}
+                        </div>
                       </div>
                       {layout.virtual3DTour && (
                         <button className="mt-3 text-blue-600 hover:text-blue-800 text-sm font-medium">
@@ -337,6 +344,74 @@ export default function PropertyDetail() {
                       ))}
                     </div>
                   </div>
+
+                  {/* Unit Availability Section */}
+                  {selectedLayout.unitAvailability && selectedLayout.unitAvailability.length > 0 && (
+                    <div className="mb-6 border-t pt-4">
+                      <h4 className="font-semibold mb-3 flex items-center gap-2">
+                        <svg className="w-5 h-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+                        </svg>
+                        Available Units ({selectedLayout.unitAvailability.length})
+                      </h4>
+                      <div className="max-h-48 overflow-y-auto space-y-2">
+                        {selectedLayout.unitAvailability
+                          .sort((a, b) => new Date(a.availableDate).getTime() - new Date(b.availableDate).getTime())
+                          .map((unit, idx) => {
+                            const availDate = new Date(unit.availableDate);
+                            const today = new Date();
+                            const daysUntilAvailable = Math.ceil((availDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
+                            
+                            return (
+                              <div key={idx} className="bg-gray-50 rounded-lg p-3 border border-gray-200">
+                                <div className="flex justify-between items-start">
+                                  <div>
+                                    <div className="flex items-center gap-2">
+                                      <span className="font-semibold text-gray-900">Unit {unit.unitNumber}</span>
+                                      <span className="text-xs text-gray-500">Floor {unit.floor}</span>
+                                    </div>
+                                    <div className="text-sm mt-1">
+                                      {unit.isImmediatelyAvailable ? (
+                                        <span className="text-green-600 font-medium flex items-center gap-1">
+                                          <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                                            <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                                          </svg>
+                                          Available Now
+                                        </span>
+                                      ) : (
+                                        <span className="text-blue-600">
+                                          Available {availDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+                                          <span className="text-gray-500 text-xs ml-1">({daysUntilAvailable} days)</span>
+                                        </span>
+                                      )}
+                                    </div>
+                                  </div>
+                                  <div className="text-right">
+                                    <div className="font-bold text-lg">${unit.rentAmount}/mo</div>
+                                    <div className="text-xs text-gray-500">Deposit: ${unit.depositAmount}</div>
+                                  </div>
+                                </div>
+                                {unit.specialOffer && (
+                                  <div className="mt-2">
+                                    <span className="inline-flex items-center gap-1 px-2 py-1 bg-yellow-100 text-yellow-800 text-xs rounded-full">
+                                      <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
+                                        <path fillRule="evenodd" d="M5 2a2 2 0 00-2 2v14l3.5-2 3.5 2 3.5-2 3.5 2V4a2 2 0 00-2-2H5zm4.707 3.707a1 1 0 00-1.414-1.414l-3 3a1 1 0 000 1.414l3 3a1 1 0 001.414-1.414L8.414 9H10a3 3 0 013 3v1a1 1 0 102 0v-1a5 5 0 00-5-5H8.414l1.293-1.293z" clipRule="evenodd" />
+                                      </svg>
+                                      {unit.specialOffer}
+                                    </span>
+                                  </div>
+                                )}
+                              </div>
+                            );
+                          })}
+                      </div>
+                      <div className="mt-3 text-center">
+                        <button className="text-sm text-blue-600 hover:text-blue-800 font-medium">
+                          Schedule a Tour →
+                        </button>
+                      </div>
+                    </div>
+                  )}
 
                   <div className="space-y-3">
                     {selectedLayout.virtual3DTour && (

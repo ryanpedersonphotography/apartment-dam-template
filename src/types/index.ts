@@ -77,6 +77,17 @@ export interface Layout {
   baseRent: number;
   availableUnits: number;
   totalUnits: number;
+  unitAvailability?: UnitAvailability[];
+}
+
+export interface UnitAvailability {
+  unitNumber: string;
+  floor: number;
+  availableDate: Date;
+  isImmediatelyAvailable: boolean;
+  rentAmount: number;
+  depositAmount: number;
+  specialOffer?: string;
 }
 
 export interface BuildingFeature {

@@ -407,6 +407,40 @@ export const generateLayout = (propertyId: string, unitTypes: UnitType[]): Layou
     'Designer Fixtures', 'Spa Bathroom', 'Kitchen Island'
   ];
   
+  const baseRent = randomInt(800, 5000);
+  const availableUnitsCount = randomInt(0, 10);
+  const totalUnits = randomInt(5, 20);
+  
+  // Generate unit availability details
+  const unitAvailability = availableUnitsCount > 0 ? Array.from({ length: availableUnitsCount }, () => {
+    const floor = randomInt(1, 15);
+    const unitLetter = String.fromCharCode(65 + randomInt(0, 6)); // A-F
+    const unitNumber = `${floor}${randomInt(0, 9)}${unitLetter}`;
+    const today = new Date();
+    const daysFromNow = randomInt(-7, 60); // Some immediately available, some up to 60 days out
+    const availableDate = new Date(today);
+    availableDate.setDate(today.getDate() + daysFromNow);
+    
+    const specialOffers = [
+      '1 Month Free Rent',
+      '$500 Off First Month',
+      'No Security Deposit',
+      'Free Parking for 6 Months',
+      'Reduced Application Fee',
+      ''
+    ];
+    
+    return {
+      unitNumber,
+      floor,
+      availableDate,
+      isImmediatelyAvailable: daysFromNow <= 0,
+      rentAmount: baseRent + randomInt(-200, 300), // Some variation in rent
+      depositAmount: baseRent,
+      specialOffer: randomElement(specialOffers) || undefined,
+    };
+  }) : [];
+  
   return {
     id,
     propertyId,
@@ -426,9 +460,10 @@ export const generateLayout = (propertyId: string, unitTypes: UnitType[]): Layou
     ),
     floorPlan: generateMediaAsset('floorplan', id, 0),
     virtual3DTour: randomBool(0.7) ? `https://my.matterport.com/show/?m=${id}` : undefined,
-    baseRent: randomInt(800, 5000),
-    availableUnits: randomInt(0, 10),
-    totalUnits: randomInt(5, 20),
+    baseRent,
+    availableUnits: availableUnitsCount,
+    totalUnits,
+    unitAvailability: unitAvailability.length > 0 ? unitAvailability : undefined,
   };
 };
 
