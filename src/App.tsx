@@ -4,6 +4,7 @@ import Layout from './components/layout/Layout'
 import Dashboard from './pages/Dashboard'
 import Properties from './pages/Properties'
 import PropertyDetail from './pages/PropertyDetail'
+import LayoutDetail from './pages/LayoutDetail'
 import MediaLibrary from './pages/MediaLibrary'
 import { useInitializeData } from './hooks/useData'
 
@@ -38,6 +39,7 @@ function App() {
           <Route path="/" element={<Dashboard />} />
           <Route path="/properties" element={<Properties />} />
           <Route path="/property/:propertyId" element={<PropertyDetail />} />
+          <Route path="/property/:propertyId/layout/:layoutId" element={<LayoutDetail />} />
           <Route path="/media" element={<MediaLibrary />} />
         </Routes>
       </Layout>

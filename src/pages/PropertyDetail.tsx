@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useParams, Link } from 'react-router-dom';
+import { useParams, Link, useNavigate } from 'react-router-dom';
 import { usePropertyDetails } from '../hooks/useData';
 import { downloadLayoutAssets } from '../utils/downloadAssets';
 import type { Layout } from '../types';
@@ -8,20 +8,19 @@ export default function PropertyDetail() {
   const { propertyId } = useParams<{ propertyId: string }>();
   const { property } = usePropertyDetails(propertyId || '');
   const [activeTab, setActiveTab] = useState<'overview' | 'layouts' | 'amenities' | 'gallery'>('overview');
-  const [selectedLayout, setSelectedLayout] = useState<Layout | null>(null);
-  const [isDownloading, setIsDownloading] = useState(false);
+  const [expandedLayout, setExpandedLayout] = useState<string | null>(null);
+  const [downloadingLayout, setDownloadingLayout] = useState<string | null>(null);
+  const navigate = useNavigate();
 
-  const handleDownloadAssets = async () => {
-    if (!selectedLayout) return;
-    
-    setIsDownloading(true);
+  const handleDownloadAssets = async (layout: Layout) => {
+    setDownloadingLayout(layout.id);
     try {
-      await downloadLayoutAssets(selectedLayout);
+      await downloadLayoutAssets(layout);
     } catch (error) {
       console.error('Failed to download assets:', error);
       alert('Failed to download assets. Please try again.');
     } finally {
-      setIsDownloading(false);
+      setDownloadingLayout(null);
     }
   };
 
@@ -154,42 +153,193 @@ export default function PropertyDetail() {
 
           {/* Layouts Tab */}
           {activeTab === 'layouts' && (
-            <div className="space-y-6">
-              <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {property.layouts?.map(layout => (
+            <div className="space-y-3">
+              {property.layouts?.map(layout => {
+                const isExpanded = expandedLayout === layout.id;
+                const availableUnits = property.units.filter(
+                  unit => unit.layoutId === layout.id && unit.status === 'available'
+                );
+                
+                return (
                   <div
                     key={layout.id}
-                    className="border rounded-lg overflow-hidden hover:shadow-lg transition-shadow cursor-pointer"
-                    onClick={() => setSelectedLayout(layout)}
+                    className="bg-white border rounded-lg overflow-hidden transition-all duration-300"
                   >
-                    <img 
-                      src={layout.marketingImages[0]?.url || property.images[0]?.url}
-                      alt={layout.name}
-                      className="w-full h-48 object-cover"
-                    />
-                    <div className="p-4">
-                      <h4 className="font-semibold text-lg mb-2">{layout.name}</h4>
-                      <div className="text-sm text-gray-600 space-y-1">
-                        <p>{layout.bedrooms} bed • {layout.bathrooms} bath • {layout.squareFeet} sq ft</p>
-                        <p className="font-semibold text-gray-900">From ${layout.baseRent}/mo</p>
-                        <div className="flex items-center gap-2">
-                          <p className="text-green-600">{layout.availableUnits} units available</p>
-                          {layout.unitAvailability && layout.unitAvailability.some(u => u.isImmediatelyAvailable) && (
-                            <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
-                              Move-in Ready
-                            </span>
-                          )}
+                    {/* Accordion Header */}
+                    <div
+                      className="p-6 cursor-pointer hover:bg-gray-50 transition-colors"
+                      onClick={() => setExpandedLayout(isExpanded ? null : layout.id)}
+                    >
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center space-x-6">
+                          <div>
+                            <h3 className="text-xl font-semibold mb-1">{layout.name}</h3>
+                            <div className="flex items-center gap-4 text-sm text-gray-600">
+                              <span>{layout.bedrooms} bed • {layout.bathrooms} bath</span>
+                              <span>{layout.squareFeet} sq ft</span>
+                              <span className="font-semibold text-gray-900">From ${layout.baseRent}/mo</span>
+                              {layout.availableUnits > 0 && (
+                                <span className="text-green-600 font-medium">
+                                  {layout.availableUnits} available
+                                </span>
+                              )}
+                              {layout.unitAvailability?.some(u => u.isImmediatelyAvailable) && (
+                                <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                                  Move-in Ready
+                                </span>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-3">
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              navigate(`/property/${propertyId}/layout/${layout.id}`);
+                            }}
+                            className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm font-medium"
+                          >
+                            View Details
+                          </button>
+                          <svg
+                            className={`w-5 h-5 text-gray-400 transition-transform duration-300 ${
+                              isExpanded ? 'transform rotate-180' : ''
+                            }`}
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
+                          >
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                          </svg>
                         </div>
                       </div>
-                      {layout.virtual3DTour && (
-                        <button className="mt-3 text-blue-600 hover:text-blue-800 text-sm font-medium">
-                          View 3D Tour →
-                        </button>
-                      )}
+                    </div>
+
+                    {/* Accordion Content */}
+                    <div
+                      className={`transition-all duration-300 overflow-hidden ${
+                        isExpanded ? 'max-h-[800px] opacity-100' : 'max-h-0 opacity-0'
+                      }`}
+                    >
+                      <div className="border-t">
+                        <div className="p-6">
+                          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                            {/* Floor Plan Image */}
+                            <div className="lg:col-span-2">
+                              <h4 className="text-sm font-semibold text-gray-700 mb-3">Floor Plan</h4>
+                              <img
+                                src={layout.floorPlan?.url || layout.marketingImages[0]?.url}
+                                alt={layout.name}
+                                className="w-full rounded-lg shadow-sm"
+                              />
+                              
+                              {/* Photo Gallery */}
+                              {layout.marketingImages.length > 0 && (
+                                <div className="mt-4">
+                                  <h4 className="text-sm font-semibold text-gray-700 mb-3">Photo Gallery</h4>
+                                  <div className="grid grid-cols-4 gap-2">
+                                    {layout.marketingImages.map((image, idx) => (
+                                      <img
+                                        key={image.id}
+                                        src={image.url}
+                                        alt={`Unit ${idx + 1}`}
+                                        className="w-full h-24 object-cover rounded-lg hover:opacity-90 transition-opacity cursor-pointer"
+                                      />
+                                    ))}
+                                  </div>
+                                </div>
+                              )}
+                            </div>
+
+                            {/* Details Sidebar */}
+                            <div className="space-y-4">
+                              {/* Features */}
+                              {layout.features.length > 0 && (
+                                <div>
+                                  <h4 className="text-sm font-semibold text-gray-700 mb-2">Features</h4>
+                                  <div className="flex flex-wrap gap-2">
+                                    {layout.features.map(feature => (
+                                      <span key={feature} className="px-2 py-1 bg-gray-100 text-gray-700 rounded text-xs">
+                                        {feature}
+                                      </span>
+                                    ))}
+                                  </div>
+                                </div>
+                              )}
+
+                              {/* Available Units */}
+                              {availableUnits.length > 0 && (
+                                <div>
+                                  <h4 className="text-sm font-semibold text-gray-700 mb-2">
+                                    Available Units ({availableUnits.length})
+                                  </h4>
+                                  <div className={`space-y-2 ${availableUnits.length > 5 ? 'max-h-48 overflow-y-auto' : ''}`}>
+                                    {availableUnits.slice(0, 8).map(unit => (
+                                      <div key={unit.id} className="flex justify-between items-center p-2 bg-gray-50 rounded text-sm">
+                                        <div>
+                                          <span className="font-medium">Unit {unit.unitNumber}</span>
+                                          <span className="text-gray-500 ml-2">Floor {unit.floor}</span>
+                                        </div>
+                                        <span className="font-semibold text-blue-600">${unit.rentAmount}</span>
+                                      </div>
+                                    ))}
+                                    {availableUnits.length > 8 && (
+                                      <p className="text-xs text-gray-500 text-center pt-2">
+                                        +{availableUnits.length - 8} more units
+                                      </p>
+                                    )}
+                                  </div>
+                                </div>
+                              )}
+
+                              {/* Action Buttons */}
+                              <div className="space-y-2 pt-2">
+                                <button
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    handleDownloadAssets(layout);
+                                  }}
+                                  disabled={downloadingLayout === layout.id}
+                                  className={`w-full px-4 py-2 rounded-lg transition-colors text-sm font-medium flex items-center justify-center gap-2 ${
+                                    downloadingLayout === layout.id
+                                      ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                                      : 'bg-blue-600 hover:bg-blue-700 text-white'
+                                  }`}
+                                >
+                                  {downloadingLayout === layout.id ? (
+                                    <>
+                                      <svg className="animate-spin h-4 w-4" fill="none" viewBox="0 0 24 24">
+                                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                      </svg>
+                                      Downloading...
+                                    </>
+                                  ) : (
+                                    <>
+                                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M9 19l3 3m0 0l3-3m-3 3V10" />
+                                      </svg>
+                                      Download Assets
+                                    </>
+                                  )}
+                                </button>
+                                {layout.virtual3DTour && (
+                                  <button className="w-full px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors text-sm font-medium">
+                                    View 3D Tour
+                                  </button>
+                                )}
+                                <button className="w-full px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors text-sm font-medium">
+                                  Schedule Tour
+                                </button>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
                     </div>
                   </div>
-                ))}
-              </div>
+                );
+              })}
 
               {property.layouts?.length === 0 && (
                 <p className="text-center text-gray-500 py-8">No floor plans available</p>
@@ -279,186 +429,6 @@ export default function PropertyDetail() {
             </div>
           )}
         </div>
-
-        {/* Layout Modal */}
-        {selectedLayout && (
-          <div
-            className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-4"
-            onClick={() => setSelectedLayout(null)}
-          >
-            <div
-              className="relative max-w-6xl w-full max-h-[90vh] bg-white rounded-lg overflow-hidden"
-              onClick={(e) => e.stopPropagation()}
-            >
-              <button
-                onClick={() => setSelectedLayout(null)}
-                className="absolute top-4 right-4 z-10 bg-white/90 rounded-full p-2 hover:bg-white transition-colors shadow-lg"
-              >
-                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                </svg>
-              </button>
-              
-              <div className="flex flex-col md:flex-row h-full max-h-[90vh]">
-                {/* Left Side - Images */}
-                <div className="md:w-3/5 bg-gray-100 p-4 overflow-y-auto">
-                  <div className="space-y-4">
-                    {/* Main Floor Plan */}
-                    <div>
-                      <h4 className="text-sm font-semibold text-gray-700 mb-2">Floor Plan</h4>
-                      <img
-                        src={selectedLayout.floorPlan?.url || selectedLayout.marketingImages[0]?.url}
-                        alt={selectedLayout.name}
-                        className="w-full rounded-lg shadow-md"
-                      />
-                    </div>
-                    
-                    {/* Marketing Images Grid */}
-                    {selectedLayout.marketingImages.length > 1 && (
-                      <div>
-                        <h4 className="text-sm font-semibold text-gray-700 mb-2">Unit Photos</h4>
-                        <div className="grid grid-cols-2 gap-2">
-                          {selectedLayout.marketingImages.slice(1).map(image => (
-                            <img
-                              key={image.id}
-                              src={image.url}
-                              alt={image.title}
-                              className="w-full h-32 object-cover rounded-lg shadow-sm"
-                            />
-                          ))}
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                </div>
-                
-                {/* Right Side - Details */}
-                <div className="md:w-2/5 p-6 overflow-y-auto">
-                  <div className="mb-6">
-                    <h3 className="text-2xl font-bold mb-2">{selectedLayout.name}</h3>
-                    <p className="text-gray-600 text-sm">{selectedLayout.description}</p>
-                  </div>
-                  
-                  {/* Quick Stats */}
-                  <div className="grid grid-cols-2 gap-3 mb-6">
-                    <div className="bg-gray-50 rounded-lg p-3">
-                      <div className="text-2xl font-bold">{selectedLayout.bedrooms}</div>
-                      <div className="text-xs text-gray-600">Bedrooms</div>
-                    </div>
-                    <div className="bg-gray-50 rounded-lg p-3">
-                      <div className="text-2xl font-bold">{selectedLayout.bathrooms}</div>
-                      <div className="text-xs text-gray-600">Bathrooms</div>
-                    </div>
-                    <div className="bg-gray-50 rounded-lg p-3">
-                      <div className="text-2xl font-bold">{selectedLayout.squareFeet}</div>
-                      <div className="text-xs text-gray-600">Square Feet</div>
-                    </div>
-                    <div className="bg-blue-50 rounded-lg p-3">
-                      <div className="text-2xl font-bold text-blue-600">${selectedLayout.baseRent}</div>
-                      <div className="text-xs text-gray-600">Starting Price</div>
-                    </div>
-                  </div>
-
-                  {/* Features */}
-                  <div className="mb-4">
-                    <h4 className="font-semibold text-sm mb-2">Features</h4>
-                    <div className="flex flex-wrap gap-1">
-                      {selectedLayout.features.map(feature => (
-                        <span key={feature} className="px-2 py-1 bg-gray-100 text-gray-700 rounded text-xs">
-                          {feature}
-                        </span>
-                      ))}
-                    </div>
-                  </div>
-
-                  {/* Unit Availability Section */}
-                  {selectedLayout.unitAvailability && selectedLayout.unitAvailability.length > 0 && (
-                    <div className="mb-4">
-                      <h4 className="font-semibold text-sm mb-2 flex items-center gap-1">
-                        <svg className="w-4 h-4 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
-                        </svg>
-                        Available Units ({selectedLayout.unitAvailability.length})
-                      </h4>
-                      <div className="max-h-32 overflow-y-auto space-y-1 pr-2">
-                        {selectedLayout.unitAvailability
-                          .sort((a, b) => new Date(a.availableDate).getTime() - new Date(b.availableDate).getTime())
-                          .map((unit, idx) => {
-                            const availDate = new Date(unit.availableDate);
-                            
-                            return (
-                              <div key={idx} className="bg-gray-50 rounded p-2 text-xs border border-gray-200">
-                                <div className="flex justify-between items-start">
-                                  <div>
-                                    <span className="font-semibold text-gray-900">Unit {unit.unitNumber}</span>
-                                    <span className="text-gray-500 ml-1">F{unit.floor}</span>
-                                    {unit.isImmediatelyAvailable ? (
-                                      <span className="text-green-600 font-medium block mt-0.5">Available Now</span>
-                                    ) : (
-                                      <span className="text-blue-600 block mt-0.5">
-                                        {availDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
-                                      </span>
-                                    )}
-                                  </div>
-                                  <div className="text-right">
-                                    <div className="font-bold">${unit.rentAmount}</div>
-                                    {unit.specialOffer && (
-                                      <span className="inline-block mt-0.5 px-1.5 py-0.5 bg-yellow-100 text-yellow-800 rounded text-xs">
-                                        {unit.specialOffer.split(' ').slice(0, 2).join(' ')}
-                                      </span>
-                                    )}
-                                  </div>
-                                </div>
-                              </div>
-                            );
-                          })}
-                      </div>
-                      <button className="text-xs text-blue-600 hover:text-blue-800 font-medium mt-2">
-                        Schedule a Tour →
-                      </button>
-                    </div>
-                  )}
-
-                  {/* Action Buttons */}
-                  <div className="space-y-2">
-                    {selectedLayout.virtual3DTour && (
-                      <button className="w-full bg-blue-600 hover:bg-blue-700 text-white py-2.5 rounded-lg font-medium text-sm">
-                        View 3D Virtual Tour
-                      </button>
-                    )}
-                    
-                    <button
-                      onClick={handleDownloadAssets}
-                      disabled={isDownloading}
-                      className={`w-full py-2.5 rounded-lg font-medium text-sm transition-colors flex items-center justify-center gap-2 ${
-                        isDownloading 
-                          ? 'bg-gray-300 text-gray-500 cursor-not-allowed' 
-                          : 'bg-green-600 hover:bg-green-700 text-white'
-                      }`}
-                    >
-                      {isDownloading ? (
-                        <>
-                          <svg className="animate-spin h-4 w-4" fill="none" viewBox="0 0 24 24">
-                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                          </svg>
-                          Downloading...
-                        </>
-                      ) : (
-                        <>
-                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M9 19l3 3m0 0l3-3m-3 3V10" />
-                          </svg>
-                          Download Assets Bundle
-                        </>
-                      )}
-                    </button>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        )}
       </div>
     </div>
   );

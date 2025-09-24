@@ -191,7 +191,7 @@ export const generateUnit = (propertyId: string, unitNumber: number): Unit => {
     type: unitType,
     layoutId: '', // Will be assigned by generateProperty
     bedrooms: bedroomMap[unitType],
-    bathrooms: unitType === 'studio' ? 1 : randomFloat(1, 2.5),
+    bathrooms: unitType === 'studio' ? 1 : randomElement([1, 2]),
     squareFeet: randomInt(minSqft, maxSqft),
     rentAmount,
     depositAmount: rentAmount * randomFloat(1, 2),
@@ -447,7 +447,7 @@ export const generateLayout = (propertyId: string, unitTypes: UnitType[]): Layou
     name: randomElement(layoutNames[type]),
     type,
     bedrooms: bedroomMap[type],
-    bathrooms: type === 'studio' ? 1 : bedroomMap[type] + randomFloat(0.5, 1),
+    bathrooms: type === 'studio' ? 1 : Math.min(bedroomMap[type], 2),
     squareFeet: randomInt(
       type === 'studio' ? 400 : 600 * bedroomMap[type], 
       type === 'studio' ? 700 : 900 * bedroomMap[type]
